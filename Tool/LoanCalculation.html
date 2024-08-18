@@ -1,1 +1,288 @@
+import React, { useState } from 'react';
+import { AlertCircle } from 'lucide-react';
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
+interface LoanDetails {
+  monthlyPrincipal: number;
+  monthlyInterest: number;
+  monthlyPayment: number;
+  totalInterest: number;
+  totalPayment: number;
+  monthlyBreakdown: { principal: number; interest: number; total: number; realRate: number; annualRate: number }[];
+}
+
+const formatNumber = (num: number, minDecimal = 2, maxDecimal = 4) => {
+  return num.toLocaleString('zh-CN', {
+    minimumFractionDigits: minDecimal,
+    maximumFractionDigits: maxDecimal,
+  });
+};
+
+const LoanCalculator: React.FC = () => {
+  const [loanAmount, setLoanAmount] = useState<string>('');
+  const [monthlyInterest, setMonthlyInterest] = useState<string>('');
+  const [loanTerm, setLoanTerm] = useState<string>('');
+  const [loanDetails, setLoanDetails] = useState<LoanDetails | null>(null);
+  const [averagePrincipalRate, setAveragePrincipalRate] = useState<number | null>(null);
+  const [irrRate, setIrrRate] = useState<number | null>(null);
+  const [showDialog, setShowDialog] = useState<boolean>(false);
+  const [showInterestDetails, setShowInterestDetails] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const calculateLoan = () => {
+    setError(null);
+    const amount = parseFloat(loanAmount) * 10000; // 转换为元
+    const interest = parseFloat(monthlyInterest);
+    const term = parseInt(loanTerm);
+
+    if (isNaN(amount) || isNaN(interest) || isNaN(term)) {
+      setError('请输入有效的数字');
+      return;
+    }
+
+    if (amount < 10000) {
+      setError('贷款金额必须至少为1万元');
+      return;
+    }
+
+    if (term <= 0) {
+      setError('借款时间必须为正数');
+      return;
+    }
+
+    const monthlyPrincipal = amount / term;
+    const monthlyPayment = monthlyPrincipal + interest;
+    const totalInterest = interest * term;
+    const totalPayment = amount + totalInterest;
+
+    const monthlyBreakdown = Array(term).fill(null).map((_, index) => {
+      const remainingPrincipal = amount - (monthlyPrincipal * index);
+      const realRate = (interest / remainingPrincipal) * 100;
+      const annualRate = realRate * 12;
+      return {
+        principal: monthlyPrincipal,
+        interest: interest,
+        total: monthlyPayment,
+        realRate: realRate,
+        annualRate: annualRate
+      };
+    });
+
+    setLoanDetails({
+      monthlyPrincipal,
+      monthlyInterest: interest,
+      monthlyPayment,
+      totalInterest,
+      totalPayment,
+      monthlyBreakdown
+    });
+  };
+
+  const calculateAveragePrincipalRate = () => {
+    if (loanDetails) {
+      const averagePrincipal = parseFloat(loanAmount) * 10000 / 2;
+      const yearlyInterest = loanDetails.monthlyInterest * 12;
+      const rate = (yearlyInterest / averagePrincipal) * 100;
+      setAveragePrincipalRate(rate);
+      setShowDialog(true);
+    }
+  };
+
+  const calculateIRR = () => {
+    if (loanDetails) {
+      const amount = parseFloat(loanAmount) * 10000;
+      const monthlyPayment = loanDetails.monthlyPayment;
+      const term = parseInt(loanTerm);
+      
+      let r = 0.1;
+      for (let i = 0; i < 100; i++) {
+        let f = amount;
+        let df = 0;
+        for (let t = 1; t <= term; t++) {
+          f -= monthlyPayment / Math.pow(1 + r, t);
+          df += t * monthlyPayment / Math.pow(1 + r, t + 1);
+        }
+        r -= f / df;
+        if (Math.abs(f) < 0.000001) break;
+      }
+      
+      const annualIRR = (Math.pow(1 + r, 12) - 1) * 100;
+      setIrrRate(annualIRR);
+      setShowDialog(true);
+    }
+  };
+
+  const showDetailedInterest = () => {
+    setShowInterestDetails(true);
+  };
+
+  return (
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">贷款计算器（固定本金固定利息）</h1>
+      <div className="space-y-4">
+        <div>
+          <label htmlFor="loanAmount" className="block mb-1">贷款金额 (万元)</label>
+          <Input
+            id="loanAmount"
+            type="number"
+            min="1"
+            value={loanAmount}
+            onChange={(e) => setLoanAmount(e.target.value)}
+            placeholder="最小1万元"
+          />
+        </div>
+        <div>
+          <label htmlFor="monthlyInterest" className="block mb-1">每月利息 (元)</label>
+          <Input
+            id="monthlyInterest"
+            type="number"
+            min="0"
+            value={monthlyInterest}
+            onChange={(e) => setMonthlyInterest(e.target.value)}
+            placeholder="每月固定利息金额"
+          />
+        </div>
+        <div>
+          <label htmlFor="loanTerm" className="block mb-1">借款时间 (月)</label>
+          <Input
+            id="loanTerm"
+            type="number"
+            min="1"
+            value={loanTerm}
+            onChange={(e) => setLoanTerm(e.target.value)}
+            placeholder="借款月数"
+          />
+        </div>
+        <Button onClick={calculateLoan}>计算</Button>
+      </div>
+
+      {error && (
+        <Alert variant="destructive" className="mt-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>错误</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {loanDetails && (
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold mb-4">还款详情</h2>
+          <table className="w-full border-collapse border border-gray-300">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="border border-gray-300 p-2">月份</th>
+                <th className="border border-gray-300 p-2">本金 (元)</th>
+                <th className="border border-gray-300 p-2">利息 (元)</th>
+                <th className="border border-gray-300 p-2">总计 (元)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loanDetails.monthlyBreakdown.map((month, index) => (
+                <tr key={index}>
+                  <td className="border border-gray-300 p-2">{index + 1}</td>
+                  <td className="border border-gray-300 p-2">{formatNumber(month.principal)}</td>
+                  <td className="border border-gray-300 p-2">{formatNumber(month.interest)}</td>
+                  <td className="border border-gray-300 p-2">{formatNumber(month.total)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="mt-4">
+            <p><strong>每月还款额：</strong> {formatNumber(loanDetails.monthlyPayment)} 元</p>
+            <p><strong>总还款额：</strong> {formatNumber(loanDetails.totalPayment, 2, 2)} 元</p>
+            <p><strong>总利息：</strong> {formatNumber(loanDetails.totalInterest, 2, 2)} 元</p>
+          </div>
+          <div className="mt-6 flex flex-wrap gap-4">
+            <Button onClick={calculateAveragePrincipalRate} className="font-normal">
+              计算等效年化成本率（平均本金法）
+            </Button>
+            <Button onClick={calculateIRR} className="font-bold">
+              计算等效年化成本率（IRR法）
+            </Button>
+            <Button onClick={showDetailedInterest} className="font-medium">
+              每个月的详细利息
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>等效年化成本率</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            {averagePrincipalRate !== null && (
+              <p className="text-lg font-normal">
+                平均本金法：{formatNumber(averagePrincipalRate)}%
+              </p>
+            )}
+            {irrRate !== null && (
+              <p className="text-lg font-bold">
+                IRR法：{formatNumber(irrRate)}%
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showInterestDetails} onOpenChange={setShowInterestDetails}>
+        <DialogContent className="max-w-4xl w-full p-0">
+          <DialogHeader className="p-6 pb-2">
+            <DialogTitle>每月详细利息</DialogTitle>
+          </DialogHeader>
+          <div className="max-h-[calc(100vh-200px)] overflow-hidden">
+            <table className="w-full border-collapse border border-gray-300">
+              <thead className="bg-gray-100 sticky top-0 z-10">
+                <tr>
+                  <th className="border border-gray-300 p-2">月份</th>
+                  <th className="border border-gray-300 p-2">剩余本金 (元)</th>
+                  <th className="border border-gray-300 p-2">固定利息 (元)</th>
+                  <th className="border border-gray-300 p-2">实际月利率 (%)</th>
+                  <th className="border border-gray-300 p-2">对应年利率 (%)</th>
+                </tr>
+              </thead>
+            </table>
+            <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 280px)' }}>
+              <table className="w-full border-collapse border border-gray-300">
+                <tbody>
+                  {loanDetails?.monthlyBreakdown.map((month, index) => (
+                    <tr key={index}>
+                      <td className="border border-gray-300 p-2">{index + 1}</td>
+                      <td className="border border-gray-300 p-2">
+                        {formatNumber(parseFloat(loanAmount) * 10000 - loanDetails.monthlyPrincipal * index, 2, 2)}
+                      </td>
+                      <td className="border border-gray-300 p-2">{formatNumber(month.interest)}</td>
+                      <td className="border border-gray-300 p-2">{formatNumber(month.realRate)}%</td>
+                      <td className="border border-gray-300 p-2">{formatNumber(month.annualRate)}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div className="p-6 pt-2">
+            <p><strong>平均月利率：</strong> 
+              {formatNumber(((loanDetails?.monthlyBreakdown[0].realRate || 0) + 
+                (loanDetails?.monthlyBreakdown[loanDetails.monthlyBreakdown.length - 1].realRate || 0)) / 2)}%
+            </p>
+            <p><strong>平均年利率：</strong> 
+              {formatNumber(((loanDetails?.monthlyBreakdown[0].annualRate || 0) + 
+                (loanDetails?.monthlyBreakdown[loanDetails.monthlyBreakdown.length - 1].annualRate || 0)) / 2)}%
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default LoanCalculator;
