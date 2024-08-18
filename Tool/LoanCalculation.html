@@ -1,288 +1,274 @@
-import React, { useState } from 'react';
-import { AlertCircle } from 'lucide-react';
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-
-interface LoanDetails {
-  monthlyPrincipal: number;
-  monthlyInterest: number;
-  monthlyPayment: number;
-  totalInterest: number;
-  totalPayment: number;
-  monthlyBreakdown: { principal: number; interest: number; total: number; realRate: number; annualRate: number }[];
-}
-
-const formatNumber = (num: number, minDecimal = 2, maxDecimal = 4) => {
-  return num.toLocaleString('zh-CN', {
-    minimumFractionDigits: minDecimal,
-    maximumFractionDigits: maxDecimal,
-  });
-};
-
-const LoanCalculator: React.FC = () => {
-  const [loanAmount, setLoanAmount] = useState<string>('');
-  const [monthlyInterest, setMonthlyInterest] = useState<string>('');
-  const [loanTerm, setLoanTerm] = useState<string>('');
-  const [loanDetails, setLoanDetails] = useState<LoanDetails | null>(null);
-  const [averagePrincipalRate, setAveragePrincipalRate] = useState<number | null>(null);
-  const [irrRate, setIrrRate] = useState<number | null>(null);
-  const [showDialog, setShowDialog] = useState<boolean>(false);
-  const [showInterestDetails, setShowInterestDetails] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const calculateLoan = () => {
-    setError(null);
-    const amount = parseFloat(loanAmount) * 10000; // 转换为元
-    const interest = parseFloat(monthlyInterest);
-    const term = parseInt(loanTerm);
-
-    if (isNaN(amount) || isNaN(interest) || isNaN(term)) {
-      setError('请输入有效的数字');
-      return;
-    }
-
-    if (amount < 10000) {
-      setError('贷款金额必须至少为1万元');
-      return;
-    }
-
-    if (term <= 0) {
-      setError('借款时间必须为正数');
-      return;
-    }
-
-    const monthlyPrincipal = amount / term;
-    const monthlyPayment = monthlyPrincipal + interest;
-    const totalInterest = interest * term;
-    const totalPayment = amount + totalInterest;
-
-    const monthlyBreakdown = Array(term).fill(null).map((_, index) => {
-      const remainingPrincipal = amount - (monthlyPrincipal * index);
-      const realRate = (interest / remainingPrincipal) * 100;
-      const annualRate = realRate * 12;
-      return {
-        principal: monthlyPrincipal,
-        interest: interest,
-        total: monthlyPayment,
-        realRate: realRate,
-        annualRate: annualRate
-      };
-    });
-
-    setLoanDetails({
-      monthlyPrincipal,
-      monthlyInterest: interest,
-      monthlyPayment,
-      totalInterest,
-      totalPayment,
-      monthlyBreakdown
-    });
-  };
-
-  const calculateAveragePrincipalRate = () => {
-    if (loanDetails) {
-      const averagePrincipal = parseFloat(loanAmount) * 10000 / 2;
-      const yearlyInterest = loanDetails.monthlyInterest * 12;
-      const rate = (yearlyInterest / averagePrincipal) * 100;
-      setAveragePrincipalRate(rate);
-      setShowDialog(true);
-    }
-  };
-
-  const calculateIRR = () => {
-    if (loanDetails) {
-      const amount = parseFloat(loanAmount) * 10000;
-      const monthlyPayment = loanDetails.monthlyPayment;
-      const term = parseInt(loanTerm);
-      
-      let r = 0.1;
-      for (let i = 0; i < 100; i++) {
-        let f = amount;
-        let df = 0;
-        for (let t = 1; t <= term; t++) {
-          f -= monthlyPayment / Math.pow(1 + r, t);
-          df += t * monthlyPayment / Math.pow(1 + r, t + 1);
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>贷款计算器</title>
+    <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
         }
-        r -= f / df;
-        if (Math.abs(f) < 0.000001) break;
-      }
-      
-      const annualIRR = (Math.pow(1 + r, 12) - 1) * 100;
-      setIrrRate(annualIRR);
-      setShowDialog(true);
-    }
-  };
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+            color: #666;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+        }
+        .result p {
+            margin: 5px 0;
+            font-size: 16px;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .external-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #4CAF50;
+            text-decoration: none;
+        }
+        .external-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
 
-  const showDetailedInterest = () => {
-    setShowInterestDetails(true);
-  };
+    <script type="text/babel">
+        const LoanCalculator = () => {
+            const [loanAmount, setLoanAmount] = React.useState(10);
+            const [monthlyInterest, setMonthlyInterest] = React.useState(500);
+            const [loanTerm, setLoanTerm] = React.useState(12);
+            const [error, setError] = React.useState('');
+            const [result, setResult] = React.useState(null);
+            const [modalContent, setModalContent] = React.useState('');
 
-  return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">贷款计算器（固定本金固定利息）</h1>
-      <div className="space-y-4">
-        <div>
-          <label htmlFor="loanAmount" className="block mb-1">贷款金额 (万元)</label>
-          <Input
-            id="loanAmount"
-            type="number"
-            min="1"
-            value={loanAmount}
-            onChange={(e) => setLoanAmount(e.target.value)}
-            placeholder="最小1万元"
-          />
-        </div>
-        <div>
-          <label htmlFor="monthlyInterest" className="block mb-1">每月利息 (元)</label>
-          <Input
-            id="monthlyInterest"
-            type="number"
-            min="0"
-            value={monthlyInterest}
-            onChange={(e) => setMonthlyInterest(e.target.value)}
-            placeholder="每月固定利息金额"
-          />
-        </div>
-        <div>
-          <label htmlFor="loanTerm" className="block mb-1">借款时间 (月)</label>
-          <Input
-            id="loanTerm"
-            type="number"
-            min="1"
-            value={loanTerm}
-            onChange={(e) => setLoanTerm(e.target.value)}
-            placeholder="借款月数"
-          />
-        </div>
-        <Button onClick={calculateLoan}>计算</Button>
-      </div>
+            const validateInput = () => {
+                if (loanAmount < 1) {
+                    setError('贷款金额最小为1万元');
+                    return false;
+                }
+                if (monthlyInterest <= 0) {
+                    setError('每月利息必须大于0');
+                    return false;
+                }
+                if (loanTerm <= 0) {
+                    setError('贷款期限必须大于0');
+                    return false;
+                }
+                setError('');
+                return true;
+            };
 
-      {error && (
-        <Alert variant="destructive" className="mt-4">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>错误</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+            const calculateAveragePrincipalRate = () => {
+                if (!validateInput()) return;
 
-      {loanDetails && (
-        <div className="mt-8">
-          <h2 className="text-xl font-semibold mb-4">还款详情</h2>
-          <table className="w-full border-collapse border border-gray-300">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="border border-gray-300 p-2">月份</th>
-                <th className="border border-gray-300 p-2">本金 (元)</th>
-                <th className="border border-gray-300 p-2">利息 (元)</th>
-                <th className="border border-gray-300 p-2">总计 (元)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loanDetails.monthlyBreakdown.map((month, index) => (
-                <tr key={index}>
-                  <td className="border border-gray-300 p-2">{index + 1}</td>
-                  <td className="border border-gray-300 p-2">{formatNumber(month.principal)}</td>
-                  <td className="border border-gray-300 p-2">{formatNumber(month.interest)}</td>
-                  <td className="border border-gray-300 p-2">{formatNumber(month.total)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className="mt-4">
-            <p><strong>每月还款额：</strong> {formatNumber(loanDetails.monthlyPayment)} 元</p>
-            <p><strong>总还款额：</strong> {formatNumber(loanDetails.totalPayment, 2, 2)} 元</p>
-            <p><strong>总利息：</strong> {formatNumber(loanDetails.totalInterest, 2, 2)} 元</p>
-          </div>
-          <div className="mt-6 flex flex-wrap gap-4">
-            <Button onClick={calculateAveragePrincipalRate} className="font-normal">
-              计算等效年化成本率（平均本金法）
-            </Button>
-            <Button onClick={calculateIRR} className="font-bold">
-              计算等效年化成本率（IRR法）
-            </Button>
-            <Button onClick={showDetailedInterest} className="font-medium">
-              每个月的详细利息
-            </Button>
-          </div>
-        </div>
-      )}
+                const totalInterest = monthlyInterest * loanTerm;
+                const totalPrincipal = loanAmount * 10000;
+                const averagePrincipal = totalPrincipal / 2;
+                const annualRate = (totalInterest / averagePrincipal) * 12 / loanTerm * 100;
+                setResult(`平均本金法计算的年利率: ${annualRate.toFixed(2)}%`);
 
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>等效年化成本率</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            {averagePrincipalRate !== null && (
-              <p className="text-lg font-normal">
-                平均本金法：{formatNumber(averagePrincipalRate)}%
-              </p>
-            )}
-            {irrRate !== null && (
-              <p className="text-lg font-bold">
-                IRR法：{formatNumber(irrRate)}%
-              </p>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+                let content = '<h2>平均本金法详细计算</h2>';
+                content += '<table><tr><th>月份</th><th>剩余本金（元）</th><th>月利息（元）</th><th>月利率</th><th>年利率</th></tr>';
 
-      <Dialog open={showInterestDetails} onOpenChange={setShowInterestDetails}>
-        <DialogContent className="max-w-4xl w-full p-0">
-          <DialogHeader className="p-6 pb-2">
-            <DialogTitle>每月详细利息</DialogTitle>
-          </DialogHeader>
-          <div className="max-h-[calc(100vh-200px)] overflow-hidden">
-            <table className="w-full border-collapse border border-gray-300">
-              <thead className="bg-gray-100 sticky top-0 z-10">
-                <tr>
-                  <th className="border border-gray-300 p-2">月份</th>
-                  <th className="border border-gray-300 p-2">剩余本金 (元)</th>
-                  <th className="border border-gray-300 p-2">固定利息 (元)</th>
-                  <th className="border border-gray-300 p-2">实际月利率 (%)</th>
-                  <th className="border border-gray-300 p-2">对应年利率 (%)</th>
-                </tr>
-              </thead>
-            </table>
-            <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 280px)' }}>
-              <table className="w-full border-collapse border border-gray-300">
-                <tbody>
-                  {loanDetails?.monthlyBreakdown.map((month, index) => (
-                    <tr key={index}>
-                      <td className="border border-gray-300 p-2">{index + 1}</td>
-                      <td className="border border-gray-300 p-2">
-                        {formatNumber(parseFloat(loanAmount) * 10000 - loanDetails.monthlyPrincipal * index, 2, 2)}
-                      </td>
-                      <td className="border border-gray-300 p-2">{formatNumber(month.interest)}</td>
-                      <td className="border border-gray-300 p-2">{formatNumber(month.realRate)}%</td>
-                      <td className="border border-gray-300 p-2">{formatNumber(month.annualRate)}%</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-          <div className="p-6 pt-2">
-            <p><strong>平均月利率：</strong> 
-              {formatNumber(((loanDetails?.monthlyBreakdown[0].realRate || 0) + 
-                (loanDetails?.monthlyBreakdown[loanDetails.monthlyBreakdown.length - 1].realRate || 0)) / 2)}%
-            </p>
-            <p><strong>平均年利率：</strong> 
-              {formatNumber(((loanDetails?.monthlyBreakdown[0].annualRate || 0) + 
-                (loanDetails?.monthlyBreakdown[loanDetails.monthlyBreakdown.length - 1].annualRate || 0)) / 2)}%
-            </p>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-};
+                const monthlyPrincipalPayment = totalPrincipal / loanTerm;
+                let remainingPrincipal = totalPrincipal;
 
-export default LoanCalculator;
+                for (let i = 1; i <= loanTerm; i++) {
+                    const monthlyRate = monthlyInterest / remainingPrincipal;
+                    const monthlyAnnualRate = monthlyRate * 12 * 100;
+
+                    content += `<tr>
+                        <td>${i}</td>
+                        <td>${remainingPrincipal.toFixed(2)}</td>
+                        <td>${monthlyInterest.toFixed(2)}</td>
+                        <td>${(monthlyRate * 100).toFixed(4)}%</td>
+                        <td>${monthlyAnnualRate.toFixed(2)}%</td>
+                    </tr>`;
+
+                    remainingPrincipal -= monthlyPrincipalPayment;
+                }
+
+                content += `</table>
+                    <p>总利息：${totalInterest.toFixed(2)}元</p>
+                    <p>平均本金：${averagePrincipal.toFixed(2)}元</p>
+                    <p>平均年利率：${annualRate.toFixed(2)}%</p>`;
+
+                setModalContent(content);
+                document.getElementById('myModal').style.display = 'block';
+            };
+
+            const showDetailedInterest = () => {
+                if (!validateInput()) return;
+
+                let content = '<h2>每月详细利息</h2>';
+                content += '<table><tr><th>月份</th><th>剩余本金（元）</th><th>利息（元）</th><th>月利率</th><th>年利率</th></tr>';
+                const totalPrincipal = loanAmount * 10000;
+                const monthlyPrincipalPayment = totalPrincipal / loanTerm;
+                let remainingPrincipal = totalPrincipal;
+                let totalInterest = 0;
+                let totalMonthlyRate = 0;
+                let totalAnnualRate = 0;
+
+                for (let i = 1; i <= loanTerm; i++) {
+                    const monthlyRate = monthlyInterest / remainingPrincipal;
+                    const annualRate = monthlyRate * 12 * 100;
+                    totalInterest += monthlyInterest;
+                    totalMonthlyRate += monthlyRate;
+                    totalAnnualRate += annualRate;
+
+                    content += `<tr>
+                        <td>${i}</td>
+                        <td>${remainingPrincipal.toFixed(2)}</td>
+                        <td>${monthlyInterest.toFixed(2)}</td>
+                        <td>${(monthlyRate * 100).toFixed(4)}%</td>
+                        <td>${annualRate.toFixed(2)}%</td>
+                    </tr>`;
+
+                    remainingPrincipal -= monthlyPrincipalPayment;
+                }
+
+                const averageInterest = totalInterest / loanTerm;
+                const averageMonthlyRate = totalMonthlyRate / loanTerm;
+                const averageAnnualRate = totalAnnualRate / loanTerm;
+                content += `</table>
+                    <p>平均每月利息：${averageInterest.toFixed(2)}元</p>
+                    <p>平均月利率：${(averageMonthlyRate * 100).toFixed(4)}%</p>
+                    <p>平均年利率：${averageAnnualRate.toFixed(2)}%</p>`;
+                setModalContent(content);
+                document.getElementById('myModal').style.display = 'block';
+            };
+
+            return (
+                <div className="container">
+                    <h1>贷款计算器</h1>
+                    <label>
+                        贷款金额（万元）：
+                        <input type="number" min="1" value={loanAmount} onChange={(e) => setLoanAmount(Number(e.target.value))} />
+                    </label>
+                    <label>
+                        每月利息（元）：
+                        <input type="number" value={monthlyInterest} onChange={(e) => setMonthlyInterest(Number(e.target.value))} />
+                    </label>
+                    <label>
+                        贷款期限（月）：
+                        <input type="number" value={loanTerm} onChange={(e) => setLoanTerm(Number(e.target.value))} />
+                    </label>
+                    <button onClick={calculateAveragePrincipalRate}>平均本金法</button>
+                    <button onClick={showDetailedInterest}>每个月的详细利息</button>
+                    {error && <p className="error">{error}</p>}
+                    {result && <div className="result"><p>{result}</p></div>}
+
+                    <div id="myModal" className="modal">
+                        <div className="modal-content">
+                            <span className="close" onClick={() => document.getElementById('myModal').style.display = 'none'}>&times;</span>
+                            <div dangerouslySetInnerHTML={{__html: modalContent}}></div>
+                        </div>
+                    </div>
+
+                    <a href="https://monica.im/share/artifact?id=griYGT6tR7gMdKzCZHQsib" target="_blank" rel="noopener noreferrer" className="external-link">
+                        另一种贷款计算工具
+                    </a>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<LoanCalculator />, document.getElementById('root'));
+    </script>
+</body>
+</html>
