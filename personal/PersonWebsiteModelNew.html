@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>我的个人网站</title>
+  <style>
+    body, html {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      line-height: 1.6;
+      color: #333;
+      scroll-behavior: smooth;
+    }
+    .container {
+      width: 80%;
+      max-width: 1200px;
+      margin: auto;
+      overflow: hidden;
+    }
+    header {
+      background: #35424a;
+      color: #ffffff;
+      padding: 1rem 0;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      transition: background 0.3s;
+    }
+    header.scrolled {
+      background: rgba(53, 66, 74, 0.9);
+    }
+    header a {
+      color: #ffffff;
+      text-decoration: none;
+      text-transform: uppercase;
+      font-size: 16px;
+      padding: 0 15px;
+    }
+    header #branding {
+      float: left;
+    }
+    header #branding h1 {
+      margin: 0;
+    }
+    header nav {
+      float: right;
+      margin-top: 10px;
+    }
+    header .highlight, header .current a {
+      color: #e8491d;
+      font-weight: bold;
+    }
+    #progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 4px;
+      background: #e8491d;
+      z-index: 1001;
+    }
+    .section {
+      padding: 4rem 0;
+      background: #ffffff;
+    }
+    .card {
+      background: #f4f4f4;
+      border-radius: 8px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    #menu-toggle {
+      display: none;
+      background: none;
+      border: none;
+      font-size: 30px;
+      color: #ffffff;
+      cursor: pointer;
+    }
+    #showcase {
+      background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://source.unsplash.com/random/1600x900');
+      background-size: cover;
+      background-position: center;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      color: #ffffff;
+    }
+    #showcase h1 {
+      font-size: 50px;
+      margin-bottom: 20px;
+    }
+    #showcase p {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    .tabs {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 2rem;
+    }
+    .tab {
+      padding: 0.5rem 1rem;
+      margin: 0 0.5rem;
+      background: #f4f4f4;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .tab.active {
+      background: #e8491d;
+      color: #ffffff;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .accordion {
+      background-color: #f4f4f4;
+      color: #444;
+      cursor: pointer;
+      padding: 18px;
+      width: 100%;
+      text-align: left;
+      border: none;
+      outline: none;
+      transition: 0.4s;
+    }
+    .active, .accordion:hover {
+      background-color: #ccc;
+    }
+    .panel {
+      padding: 0 18px;
+      background-color: white;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.2s ease-out;
+    }
+    @media (max-width: 768px) {
+      header nav {
+        display: none;
+      }
+      #menu-toggle {
+        display: block;
+        float: right;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="progress-bar"></div>
+  <header>
+    <div class="container">
+      <div id="branding">
+        <h1><span class="highlight">我的</span> 个人网站</h1>
+      </div>
+      <button id="menu-toggle">☰</button>
+      <nav>
+        <a href="#home">主页</a>
+        <a href="#about">关于我</a>
+        <a href="#portfolio">作品集</a>
+        <a href="#contact">联系方式</a>
+      </nav>
+    </div>
+  </header>
+
+  <section id="home">
+    <div id="showcase">
+      <h1>欢迎来到我的个人网站</h1>
+      <p>这里是我展示自我和分享想法的地方</p>
+    </div>
+  </section>
+
+  <section id="about" class="section">
+    <div class="container">
+      <h2>关于我</h2>
+      <button class="accordion">个人简介</button>
+      <div class="panel">
+        <p>我是一名充满热情的专业人士，专注于web开发和人工智能。</p>
+      </div>
+      <button class="accordion">专业技能</button>
+      <div class="panel">
+        <ul>
+          <li>前端开发 (HTML, CSS, JavaScript)</li>
+          <li>后端开发 (Node.js, Python)</li>
+          <li>机器学习和数据分析</li>
+        </ul>
+      </div>
+      <button class="accordion">工作经历</button>
+      <div class="panel">
+        <p>在这里添加您的工作经历...</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="portfolio" class="section">
+    <div class="container">
+      <h2>作品展示</h2>
+      <div class="tabs">
+        <button class="tab active" data-tab="web">Web开发</button>
+        <button class="tab" data-tab="ai">AI项目</button>
+        <button class="tab" data-tab="other">其他作品</button>
+      </div>
+      <div class="tab-content active" id="web">
+        <div class="card">
+          <h3>个人博客系统</h3>
+          <p>使用React和Node.js开发的全栈博客系统</p>
+        </div>
+        <div class="card">
+          <h3>电商平台</h3>
+          <p>基于Vue.js的现代电子商务网站</p>
+        </div>
+      </div>
+      <div class="tab-content" id="ai">
+        <div class="card">
+          <h3>图像识别API</h3>
+          <p>使用TensorFlow开发的图像分类服务</p>
+        </div>
+        <div class="card">
+          <h3>自然语言处理工具</h3>
+          <p>基于BERT的多语言文本分析工具</p>
+        </div>
+      </div>
+      <div class="tab-content" id="other">
+        <div class="card">
+          <h3>移动应用</h3>
+          <p>使用Flutter开发的跨平台健康追踪应用</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact" class="section">
+    <div class="container">
+      <h2>联系方式</h2>
+      <div class="card">
+        <p>邮箱：example@email.com</p>
+        <p>LinkedIn：linkedin.com/in/yourprofile</p>
+        <p>GitHub：github.com/yourusername</p>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // 进度条
+    window.addEventListener('scroll', () => {
+      const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+      const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const scrolled = (winScroll / height) * 100;
+      document.getElementById('progress-bar').style.width = scrolled + '%';
+    });
+
+    // 粘性导航栏
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 50) {
+        document.querySelector('header').classList.add('scrolled');
+      } else {
+        document.querySelector('header').classList.remove('scrolled');
+      }
+    });
+
+    // 移动端菜单
+    const menuToggle = document.getElementById('menu-toggle');
+    const nav = document.querySelector('header nav');
+    menuToggle.addEventListener('click', () => {
+      nav.style.display = nav.style.display === 'block' ? 'none' : 'block';
+    });
+
+    // 标签切换
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const tabContents = document.querySelectorAll('.tab-content');
+        tabContents.forEach(content => content.classList.remove('active'));
+        document.getElementById(tab.dataset.tab).classList.add('active');
+      });
+    });
+
+    // 手风琴效果
+    const acc = document.getElementsByClassName("accordion");
+    for (let i = 0; i < acc.length; i++) {
+      acc[i].addEventListener("click", function() {
+        this.classList.toggle("active");
+        const panel = this.nextElementSibling;
+        if (panel.style.maxHeight) {
+          panel.style.maxHeight = null;
+        } else {
+          panel.style.maxHeight = panel.scrollHeight + "px";
+        }
+      });
+    }
+  </script>
+</body>
+</html>
