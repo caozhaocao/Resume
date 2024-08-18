@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>个人网站</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      line-height: 1.6;
+      color: #333;
+    }
+    .container {
+      width: 80%;
+      margin: auto;
+      overflow: hidden;
+    }
+    header {
+      background: #35424a;
+      color: #ffffff;
+      padding-top: 30px;
+      min-height: 70px;
+      border-bottom: #e8491d 3px solid;
+      position: fixed;
+      width: 100%;
+      top: 0;
+      z-index: 1000;
+    }
+    header a {
+      color: #ffffff;
+      text-decoration: none;
+      text-transform: uppercase;
+      font-size: 16px;
+    }
+    header ul {
+      padding: 0;
+      margin: 0;
+      list-style: none;
+    }
+    header li {
+      display: inline;
+      padding: 0 20px 0 20px;
+    }
+    header #branding {
+      float: left;
+    }
+    header #branding h1 {
+      margin: 0;
+    }
+    header nav {
+      float: right;
+      margin-top: 10px;
+    }
+    header .highlight, header .current a {
+      color: #e8491d;
+      font-weight: bold;
+    }
+    #showcase {
+      min-height: 400px;
+      background: #f4f4f4;
+      text-align: center;
+      padding-top: 150px;
+    }
+    #showcase h1 {
+      font-size: 55px;
+      margin-bottom: 10px;
+    }
+    #showcase p {
+      font-size: 20px;
+    }
+    section {
+      padding: 15px;
+      background: #ffffff;
+      margin-top: 20px;
+    }
+    footer {
+      padding: 20px;
+      margin-top: 20px;
+      color: #ffffff;
+      background-color: #35424a;
+      text-align: center;
+    }
+    #hidden-menu {
+      position: fixed;
+      right: -250px;
+      top: 0;
+      width: 250px;
+      height: 100%;
+      background-color: #35424a;
+      transition: right 0.3s ease-in-out;
+      z-index: 1001;
+      padding-top: 60px;
+    }
+    #hidden-menu ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    #hidden-menu li {
+      padding: 10px 20px;
+    }
+    #hidden-menu a {
+      color: #ffffff;
+      text-decoration: none;
+      font-size: 18px;
+    }
+    #hidden-menu a:hover {
+      color: #e8491d;
+    }
+    #menu-trigger {
+      position: fixed;
+      right: 0;
+      top: 50%;
+      width: 50px;
+      height: 50px;
+      background-color: #e8491d;
+      cursor: pointer;
+      z-index: 1002;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <div id="branding">
+        <h1><span class="highlight">我的</span> 个人网站</h1>
+      </div>
+      <nav>
+        <ul>
+          <li class="current"><a href="#home">主页</a></li>
+          <li><a href="#about">关于我</a></li>
+          <li><a href="#portfolio">作品集</a></li>
+          <li><a href="#contact">联系方式</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <div id="menu-trigger"></div>
+  <div id="hidden-menu">
+    <ul>
+      <li><a href="#home">主页</a></li>
+      <li><a href="#about">关于我</a></li>
+      <li><a href="#portfolio">作品集</a></li>
+      <li><a href="#contact">联系方式</a></li>
+    </ul>
+  </div>
+
+  <section id="home">
+    <div id="showcase">
+      <div class="container">
+        <h1>欢迎来到我的个人网站</h1>
+        <p>这里是我展示自我和分享想法的地方</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="about">
+    <div class="container">
+      <h2>关于我</h2>
+      <p>我是一名充满热情的专业人士，专注于web开发和人工智能。</p>
+      <h3>专业技能：</h3>
+      <ul>
+        <li>前端开发 (HTML, CSS, JavaScript)</li>
+        <li>后端开发 (Node.js, Python)</li>
+        <li>机器学习和数据分析</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="portfolio">
+    <div class="container">
+      <h2>作品展示</h2>
+      <div class="project">
+        <h3>个人博客系统</h3>
+        <p>使用React和Node.js开发的全栈博客应用</p>
+      </div>
+      <div class="project">
+        <h3>AI图像识别工具</h3>
+        <p>基于TensorFlow的图像分类和对象检测应用</p>
+      </div>
+      <div class="project">
+        <h3>响应式电商网站</h3>
+        <p>为本地小型企业开发的移动友好型在线商店</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact">
+    <div class="container">
+      <h2>联系方式</h2>
+      <p>邮箱：example@email.com</p>
+      <p>社交媒体：</p>
+      <a href="#">GitHub</a> | <a href="#">LinkedIn</a>
+    </div>
+  </section>
+
+  <footer>
+    <p>版权所有 &copy; 2024 我的个人网站</p>
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const navLinks = document.querySelectorAll('header nav a, #hidden-menu a');
+      const menuTrigger = document.getElementById('menu-trigger');
+      const hiddenMenu = document.getElementById('hidden-menu');
+      let menuTimeout;
+      
+      navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          
+          const targetId = this.getAttribute('href').substring(1);
+          const targetElement = document.getElementById(targetId);
+          
+          if (targetElement) {
+            const headerOffset = 70; // 头部高度
+            const elementPosition = targetElement.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+            window.scrollTo({
+              top: offsetPosition,
+              behavior: 'smooth'
+            });
+
+            // 如果是隐藏菜单中的链接，点击后关闭菜单
+            if (hiddenMenu.contains(this)) {
+              hiddenMenu.style.right = '-250px';
+            }
+          }
+        });
+      });
+
+      // 鼠标移入触发区域时显示菜单
+      menuTrigger.addEventListener('mouseenter', function() {
+        clearTimeout(menuTimeout);
+        hiddenMenu.style.right = '0';
+      });
+
+      // 鼠标移入隐藏菜单时保持显示
+      hiddenMenu.addEventListener('mouseenter', function() {
+        clearTimeout(menuTimeout);
+      });
+
+      // 鼠标移出触发区域和隐藏菜单时，延迟隐藏菜单
+      menuTrigger.addEventListener('mouseleave', setHideMenuTimeout);
+      hiddenMenu.addEventListener('mouseleave', setHideMenuTimeout);
+
+      function setHideMenuTimeout() {
+        menuTimeout = setTimeout(() => {
+          hiddenMenu.style.right = '-250px';
+        }, 300);
+      }
+    });
+  </script>
+</body>
+</html>
